@@ -99,19 +99,21 @@ export default function CartographieDetail() {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Cartographie {id}</h1>
-      <p className="mb-4 text-gray-600">{cartoNom}</p>
+    <div className="p-6 max-w-2xl mx-auto space-y-8">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold mb-2">Cartographie {id}</h1>
+        <p className="text-gray-600 text-lg">{cartoNom}</p>
+      </div>
 
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Processus principaux</h2>
-        <ul className="space-y-2">
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Processus principaux</h2>
+        <ul className="space-y-3">
           {processList.map((p) => (
             <li
               key={p.id}
-              className="border p-2 rounded flex justify-between items-center"
+              className="border p-4 rounded-2xl flex justify-between items-center bg-white shadow"
             >
-              <span>
+              <span className="font-medium">
                 [{p.id}] {p.nom}
               </span>
               <button
@@ -125,38 +127,41 @@ export default function CartographieDetail() {
         </ul>
       </div>
 
-      <div className="flex gap-2 mb-6">
-        <input
-          placeholder="ID du processus existant"
-          value={newProcessId}
-          onChange={(e) => setNewProcessId(e.target.value)}
-          className="border px-2 py-1 rounded flex-1"
-        />
-        <button
-          onClick={ajouterProcessus}
-          className="bg-blue-600 text-white px-4 py-1 rounded"
-        >
-          Ajouter existant
-        </button>
+      <div className="space-y-4">
+        <h2 className="font-semibold text-lg">Ajouter un processus existant</h2>
+        <div className="flex gap-2">
+          <input
+            placeholder="ID du processus existant"
+            value={newProcessId}
+            onChange={(e) => setNewProcessId(e.target.value)}
+            className="border px-4 py-2 rounded-2xl w-full"
+          />
+          <button
+            onClick={ajouterProcessus}
+            className="bg-blue-600 text-white px-4 py-2 rounded-2xl hover:bg-blue-700"
+          >
+            Ajouter
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <h2 className="font-semibold">Créer un nouveau processus</h2>
+      <div className="space-y-4">
+        <h2 className="font-semibold text-lg">Créer et ajouter un processus</h2>
         <input
           placeholder="ID du nouveau processus"
           value={newProcessId}
           onChange={(e) => setNewProcessId(e.target.value)}
-          className="border px-2 py-1 rounded w-full"
+          className="border px-4 py-2 rounded-2xl w-full"
         />
         <input
           placeholder="Nom du processus"
           value={newProcessNom}
           onChange={(e) => setNewProcessNom(e.target.value)}
-          className="border px-2 py-1 rounded w-full"
+          className="border px-4 py-2 rounded-2xl w-full"
         />
         <button
           onClick={creerEtAjouterProcessus}
-          className="bg-green-600 text-white px-4 py-1 rounded"
+          className="bg-green-600 text-white px-4 py-2 rounded-2xl hover:bg-green-700 w-full"
         >
           Créer et ajouter
         </button>
