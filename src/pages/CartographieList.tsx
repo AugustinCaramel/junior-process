@@ -57,14 +57,16 @@ export default function CartographieList() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start p-6">
+    <div className="min-h-screen flex justify-center items-start bg-gray-50 p-6">
       <div className="w-full max-w-2xl space-y-8">
+        {/* Titre */}
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">Cartographies</h1>
           <p className="text-gray-600">Crée et gère les cartographies de l'application</p>
         </div>
-  
-        <div className="bg-white p-4 rounded-2xl shadow space-y-4">
+
+        {/* Formulaire */}
+        <div className="bg-white p-6 rounded-2xl shadow space-y-4">
           <h2 className="text-xl font-semibold">Ajouter une cartographie</h2>
           <div className="flex gap-2">
             <input
@@ -87,7 +89,8 @@ export default function CartographieList() {
             </button>
           </div>
         </div>
-  
+
+        {/* Liste */}
         <div className="space-y-3">
           {cartographies.map((c) => (
             <div
@@ -112,5 +115,4 @@ export default function CartographieList() {
       </div>
     </div>
   );
-  
 }
