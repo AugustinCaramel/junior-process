@@ -1,7 +1,12 @@
 import { Routes, Route, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { auth, provider } from "./firebase";
 import { signInWithPopup } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, provider, db } from "./firebase";
+import Utilisateurs from "./pages/utilisateurs";
+
+const ALLOWED_DOMAIN = "@jinnov-insa.fr";
+const DEFAULT_ADMIN = "augustin.zahorka@jinnov-insa.fr";
 
 function App() {
   const [user, setUser] = useState<any>(null);
@@ -27,22 +32,32 @@ function App() {
   };
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       const email = user?.email ?? "";
-      const allowedDomain = "@jinnov-insa.fr";
-
-      if (user && email.endsWith(allowedDomain)) {
-        setUser(user);
-      } else {
-        if (user) {
-          alert("Accès réservé aux comptes @jinnov-insa.fr");
-        }
+  
+      if (!email.endsWith(ALLOWED_DOMAIN)) {
+        alert("Accès refusé.");
         auth.signOut();
+        return;
       }
-
-      setCheckingAuth(false);
+  
+      if (!user) return;
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+  
+      if (!userSnap.exists()) {
+        const role = email === DEFAULT_ADMIN ? "admin" : "viewer";
+        await setDoc(userRef, {
+          uid: user.uid,
+          email,
+          displayName: user.displayName,
+          role,
+        });
+      }
+  
+      setUser(user);
     });
-
+  
     return () => unsubscribe();
   }, []);
 
@@ -76,12 +91,15 @@ function App() {
         <Link to="/">Accueil</Link>
         <Link to="/cartographie">Cartographie</Link>
         <Link to="/processus">Processus</Link>
+        <Link to="/utilisateurs">Utilisateurs</Link>
+
       </nav>
 
       <Routes>
         <Route path="/" element={<Accueil />} />
         <Route path="/cartographie" element={<Cartographie />} />
         <Route path="/processus" element={<Processus />} />
+        <Route path="/utilisateurs" element={<Utilisateurs />} />
       </Routes>
     </div>
   );
