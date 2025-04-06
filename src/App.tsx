@@ -1,6 +1,6 @@
 import { Routes, Route, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, provider, db } from "./firebase";
 import Utilisateurs from "./pages/utilisateurs";
@@ -8,21 +8,24 @@ import Utilisateurs from "./pages/utilisateurs";
 const ALLOWED_DOMAIN = "@jinnov-insa.fr";
 const DEFAULT_ADMIN = "augustin.zahorka@jinnov-insa.fr";
 
+type UserRole = "admin" | "editor" | null;
+
+interface AppUser {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: UserRole;
+}
+
 function App() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   const login = async () => {
     try {
-      signInWithPopup(auth, provider)
-        .then((result) => {
-          console.log("Connecté :", result.user.email);
-        })
-        .catch((error) => {
-          console.error("Erreur auth :", error);
-        });
-    } catch (err) {
-      console.error(err);
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Erreur auth :", error);
     }
   };
 
@@ -32,41 +35,49 @@ function App() {
   };
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        setCheckingAuth(false); // ✅ FIN DE L'ATTENTE
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) {
+        setCheckingAuth(false);
         return;
       }
-  
-      const email = user.email ?? "";
-  
+
+      const email = firebaseUser.email ?? "";
+
       if (!email.endsWith(ALLOWED_DOMAIN)) {
         alert("Accès refusé.");
         auth.signOut();
-        setCheckingAuth(false); // ✅ FIN DE L'ATTENTE
+        setCheckingAuth(false);
         return;
       }
-  
-      const userRef = doc(db, "users", user.uid);
+
+      const userRef = doc(db, "users", firebaseUser.uid);
       const userSnap = await getDoc(userRef);
-  
+      let role: UserRole = null;
+
       if (!userSnap.exists()) {
-        const role = email === DEFAULT_ADMIN ? "admin" : "viewer";
+        role = email === DEFAULT_ADMIN ? "admin" : null;
         await setDoc(userRef, {
-          uid: user.uid,
+          uid: firebaseUser.uid,
           email,
-          displayName: user.displayName,
+          displayName: firebaseUser.displayName,
           role,
         });
+      } else {
+        role = userSnap.data().role ?? null;
       }
-  
-      setUser(user);
-      setCheckingAuth(false); // ✅ FIN DE L'ATTENTE
+
+      setUser({
+        uid: firebaseUser.uid,
+        email,
+        displayName: firebaseUser.displayName ?? "",
+        role,
+      });
+
+      setCheckingAuth(false);
     });
-  
+
     return () => unsubscribe();
   }, []);
-  
 
   if (checkingAuth) {
     return <p className="p-6">Chargement...</p>;
@@ -88,7 +99,12 @@ function App() {
   return (
     <div className="p-6">
       <div className="mb-4 flex items-center justify-between">
-        <div>Bonjour {user.displayName} ({user.email})</div>
+        <div>
+          Bonjour {user.displayName} ({user.email}) —{" "}
+          <span className="italic text-gray-500">
+            {user.role ?? "lecteur"}
+          </span>
+        </div>
         <button onClick={logout} className="text-sm underline text-blue-600">
           Déconnexion
         </button>
@@ -98,15 +114,23 @@ function App() {
         <Link to="/">Accueil</Link>
         <Link to="/cartographie">Cartographie</Link>
         <Link to="/processus">Processus</Link>
-        <Link to="/utilisateurs">Utilisateurs</Link>
-
+        {user.role === "admin" && <Link to="/utilisateurs">Utilisateurs</Link>}
       </nav>
 
       <Routes>
         <Route path="/" element={<Accueil />} />
         <Route path="/cartographie" element={<Cartographie />} />
         <Route path="/processus" element={<Processus />} />
-        <Route path="/utilisateurs" element={<Utilisateurs />} />
+        <Route
+          path="/utilisateurs"
+          element={
+            user.role === "admin" ? (
+              <Utilisateurs />
+            ) : (
+              <div className="text-red-600 p-6">Accès refusé.</div>
+            )
+          }
+        />
       </Routes>
     </div>
   );
