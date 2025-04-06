@@ -3,123 +3,142 @@ import {
   collection,
   getDocs,
   doc,
-  updateDoc,
+  setDoc,
   deleteDoc,
 } from "firebase/firestore";
-import { db, auth } from "../firebase";
+import { db } from "../firebase";
 
 type UserRole = "admin" | "editor";
 
 interface UserEntry {
-  uid: string;
   email: string;
-  displayName: string;
-  role?: UserRole; // undefined = lecteur
+  displayName?: string;
+  role: UserRole;
 }
 
-export default function Utilisateurs() {
+interface Props {
+  currentUserEmail: string;
+}
+
+export default function Utilisateurs({ currentUserEmail }: Props) {
   const [users, setUsers] = useState<UserEntry[]>([]);
-  const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(null);
+  const [newEmail, setNewEmail] = useState("");
+  const [newRole, setNewRole] = useState<UserRole>("editor");
 
   useEffect(() => {
     const fetchUsers = async () => {
       const snapshot = await getDocs(collection(db, "users"));
       const list: UserEntry[] = [];
-
-      snapshot.forEach((doc) => {
-        list.push(doc.data() as UserEntry);
-      });
-
+      snapshot.forEach((doc) => list.push(doc.data() as UserEntry));
       setUsers(list);
-
-      const current = snapshot.docs.find((d) => d.id === auth.currentUser?.uid);
-      if (current) {
-        const role = (current.data() as UserEntry).role;
-        setCurrentUserRole(role ?? null);
-      }
     };
-
     fetchUsers();
   }, []);
 
-  const updateRole = async (uid: string, newRole: UserRole) => {
-    await updateDoc(doc(db, "users", uid), {
+  const addUser = async () => {
+    const email = newEmail.trim().toLowerCase();
+
+    if (!email.endsWith("@jinnov-insa.fr")) {
+      alert("L'adresse doit être un email jinnov-insa.fr");
+      return;
+    }
+
+    await setDoc(doc(db, "users", email), {
+      email,
       role: newRole,
     });
 
+    setUsers((prev) => [...prev, { email, role: newRole }]);
+    setNewEmail("");
+  };
+
+  const updateUserRole = async (email: string, role: UserRole) => {
+    await setDoc(doc(db, "users", email), { role, email }, { merge: true });
     setUsers((prev) =>
-      prev.map((u) => (u.uid === uid ? { ...u, role: newRole } : u))
+      prev.map((u) => (u.email === email ? { ...u, role } : u))
     );
   };
 
-  const deleteUser = async (uid: string) => {
+  const deleteUser = async (email: string) => {
+    if (email === currentUserEmail) {
+      alert("Tu ne peux pas te supprimer toi-même.");
+      return;
+    }
+
     if (confirm("Supprimer cet utilisateur ?")) {
-      await deleteDoc(doc(db, "users", uid));
-      setUsers((prev) => prev.filter((u) => u.uid !== uid));
+      await deleteDoc(doc(db, "users", email));
+      setUsers((prev) => prev.filter((u) => u.email !== email));
     }
   };
 
-  if (currentUserRole !== "admin") {
-    return (
-      <div className="p-6 text-red-600">
-        Accès réservé aux administrateurs.
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-2xl">
       <h1 className="text-2xl font-bold mb-4">Gestion des utilisateurs</h1>
+
+      <div className="flex gap-2 mb-6">
+        <input
+          type="email"
+          placeholder="email@jinnov-insa.fr"
+          className="border rounded px-2 py-1 flex-1"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+        />
+        <select
+          value={newRole}
+          onChange={(e) => setNewRole(e.target.value as UserRole)}
+          className="border rounded px-2 py-1"
+        >
+          <option value="editor">Éditeur</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button
+          onClick={addUser}
+          className="bg-blue-600 text-white px-4 py-1 rounded"
+        >
+          Ajouter
+        </button>
+      </div>
+
       <table className="w-full text-left border-collapse">
         <thead>
           <tr className="border-b">
-            <th className="py-2">Email</th>
-            <th className="py-2">Nom</th>
-            <th className="py-2">Rôle</th>
-            <th className="py-2">Modifier le rôle</th>
-            <th className="py-2">Actions</th>
+            <th>Email</th>
+            <th>Rôle</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {users.map((u) => {
-            const isSelf = u.uid === auth.currentUser?.uid;
-
-            return (
-              <tr key={u.uid} className="border-t">
-                <td className="py-2">{u.email}</td>
-                <td className="py-2">{u.displayName}</td>
-                <td className="py-2">{u.role ?? "lecteur"}</td>
-                <td className="py-2">
-                  {!isSelf ? (
-                    <select
-                      value={u.role ?? ""}
-                      onChange={(e) =>
-                        updateRole(u.uid, e.target.value as UserRole)
-                      }
-                      className="border px-2 py-1 rounded"
-                    >
-                      <option value="editor">Éditeur</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  ) : (
-                    <span className="italic text-gray-500">
-                      non modifiable
-                    </span>
-                  )}
-                </td>
-                <td className="py-2">
-                  {!isSelf && (
-                    <button
-                      onClick={() => deleteUser(u.uid)}
-                      className="text-red-600 underline text-sm"
-                    >
-                      Supprimer
-                    </button>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
+          {users.map((u) => (
+            <tr key={u.email} className="border-t">
+              <td>{u.email}</td>
+              <td>
+                {u.email === currentUserEmail ? (
+                  <span className="italic text-gray-500">non modifiable</span>
+                ) : (
+                  <select
+                    value={u.role}
+                    onChange={(e) =>
+                      updateUserRole(u.email, e.target.value as UserRole)
+                    }
+                    className="border px-2 py-1 rounded"
+                  >
+                    <option value="editor">Éditeur</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                )}
+              </td>
+              <td>
+                {u.email !== currentUserEmail && (
+                  <button
+                    onClick={() => deleteUser(u.email)}
+                    className="text-red-600 underline text-sm"
+                  >
+                    Supprimer
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

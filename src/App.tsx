@@ -1,7 +1,7 @@
 import { Routes, Route, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { auth, provider, db } from "./firebase";
 import Utilisateurs from "./pages/utilisateurs";
 
@@ -11,7 +11,6 @@ const DEFAULT_ADMIN = "augustin.zahorka@jinnov-insa.fr";
 type UserRole = "admin" | "editor" | null;
 
 interface AppUser {
-  uid: string;
   email: string;
   displayName: string;
   role: UserRole;
@@ -50,28 +49,24 @@ function App() {
         return;
       }
 
-      const userRef = doc(db, "users", firebaseUser.uid);
+      const userRef = doc(db, "users", email);
       const userSnap = await getDoc(userRef);
-      let role: UserRole = null;
 
       if (!userSnap.exists()) {
-        role = email === DEFAULT_ADMIN ? "admin" : null;
-        await setDoc(userRef, {
-          uid: firebaseUser.uid,
-          email,
-          displayName: firebaseUser.displayName,
-          role,
-        });
+        if (email === DEFAULT_ADMIN) {
+          setUser({ email, displayName: firebaseUser.displayName ?? "", role: "admin" });
+        } else {
+          alert("Tu n'es pas autorisé à accéder à cette application.");
+          auth.signOut();
+        }
       } else {
-        role = userSnap.data().role ?? null;
+        const data = userSnap.data();
+        setUser({
+          email: data.email,
+          displayName: data.displayName ?? firebaseUser.displayName ?? "",
+          role: data.role ?? null,
+        });
       }
-
-      setUser({
-        uid: firebaseUser.uid,
-        email,
-        displayName: firebaseUser.displayName ?? "",
-        role,
-      });
 
       setCheckingAuth(false);
     });
@@ -79,9 +74,7 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  if (checkingAuth) {
-    return <p className="p-6">Chargement...</p>;
-  }
+  if (checkingAuth) return <p className="p-6">Chargement...</p>;
 
   if (!user) {
     return (
@@ -125,7 +118,7 @@ function App() {
           path="/utilisateurs"
           element={
             user.role === "admin" ? (
-              <Utilisateurs />
+              <Utilisateurs currentUserEmail={user.email} />
             ) : (
               <div className="text-red-600 p-6">Accès refusé.</div>
             )
@@ -139,11 +132,9 @@ function App() {
 function Accueil() {
   return <h1 className="text-2xl font-bold">Page d'accueil</h1>;
 }
-
 function Cartographie() {
   return <h1 className="text-2xl font-bold">Vue Cartographie</h1>;
 }
-
 function Processus() {
   return <h1 className="text-2xl font-bold">Vue Processus</h1>;
 }
