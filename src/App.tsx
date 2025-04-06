@@ -33,15 +33,20 @@ function App() {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      const email = user?.email ?? "";
+      if (!user) {
+        setCheckingAuth(false); // ✅ FIN DE L'ATTENTE
+        return;
+      }
+  
+      const email = user.email ?? "";
   
       if (!email.endsWith(ALLOWED_DOMAIN)) {
         alert("Accès refusé.");
         auth.signOut();
+        setCheckingAuth(false); // ✅ FIN DE L'ATTENTE
         return;
       }
   
-      if (!user) return;
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
   
@@ -56,10 +61,12 @@ function App() {
       }
   
       setUser(user);
+      setCheckingAuth(false); // ✅ FIN DE L'ATTENTE
     });
   
     return () => unsubscribe();
   }, []);
+  
 
   if (checkingAuth) {
     return <p className="p-6">Chargement...</p>;
