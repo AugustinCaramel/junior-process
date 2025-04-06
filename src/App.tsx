@@ -4,6 +4,8 @@ import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, provider, db } from "./firebase";
 import Utilisateurs from "./pages/utilisateurs";
+import CartographieDetail from "./pages/CartographieDetail";
+import ProcessusDetail from "./pages/ProcessusDetail";
 
 const ALLOWED_DOMAIN = "@jinnov-insa.fr";
 const DEFAULT_ADMIN = "augustin.zahorka@jinnov-insa.fr";
@@ -114,6 +116,7 @@ function App() {
         <Route path="/" element={<Accueil />} />
         <Route path="/cartographie" element={<Cartographie />} />
         <Route path="/processus" element={<Processus />} />
+        <Route path="/cartographie/:id" element={<CartographieDetail />} />
         <Route
           path="/utilisateurs"
           element={
