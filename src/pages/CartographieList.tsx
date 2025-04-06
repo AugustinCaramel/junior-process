@@ -58,7 +58,7 @@ export default function CartographieList() {
 
   return (
     <div className="min-h-screen flex justify-center items-start bg-gray-50 p-6">
-      <div className="w-full max-w-2xl space-y-8">
+      <div className="bg-white shadow rounded-2xl p-6 w-full max-w-2xl space-y-8">
         {/* Titre */}
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">Cartographies</h1>
