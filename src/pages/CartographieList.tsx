@@ -57,37 +57,46 @@ export default function CartographieList() {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Cartographies</h1>
-
-      <div className="flex gap-2 mb-4">
-        <input
-          className="border px-2 py-1 rounded"
-          placeholder="ID (ex: C001)"
-          value={newId}
-          onChange={(e) => setNewId(e.target.value)}
-        />
-        <input
-          className="border px-2 py-1 rounded flex-1"
-          placeholder="Nom de la cartographie"
-          value={newNom}
-          onChange={(e) => setNewNom(e.target.value)}
-        />
-        <button
-          className="bg-blue-600 text-white px-4 py-1 rounded"
-          onClick={ajouterCartographie}
-        >
-          Ajouter
-        </button>
+    <div className="p-6 max-w-2xl mx-auto space-y-8">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold mb-2">Cartographies</h1>
+        <p className="text-gray-600">Crée et gère les cartographies de l'application</p>
       </div>
 
-      <ul className="space-y-2">
-        {cartographies.map((c) => (
-          <li
-            key={c.id}
-            className="border p-3 rounded flex justify-between items-center"
+      <div className="bg-white p-4 rounded-2xl shadow space-y-4">
+        <h2 className="text-xl font-semibold">Ajouter une cartographie</h2>
+        <div className="flex gap-2">
+          <input
+            className="border px-4 py-2 rounded-2xl w-1/3"
+            placeholder="ID (ex: C001)"
+            value={newId}
+            onChange={(e) => setNewId(e.target.value)}
+          />
+          <input
+            className="border px-4 py-2 rounded-2xl flex-1"
+            placeholder="Nom de la cartographie"
+            value={newNom}
+            onChange={(e) => setNewNom(e.target.value)}
+          />
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded-2xl hover:bg-blue-700"
+            onClick={ajouterCartographie}
           >
-            <Link to={`/cartographie/${c.id}`} className="font-medium">
+            Ajouter
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {cartographies.map((c) => (
+          <div
+            key={c.id}
+            className="border p-4 rounded-2xl flex justify-between items-center bg-white shadow"
+          >
+            <Link
+              to={`/cartographie/${c.id}`}
+              className="font-medium text-blue-700 hover:underline"
+            >
               [{c.id}] {c.nom}
             </Link>
             <button
@@ -96,9 +105,9 @@ export default function CartographieList() {
             >
               Supprimer
             </button>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
