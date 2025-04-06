@@ -9,7 +9,13 @@ function App() {
 
   const login = async () => {
     try {
-      await signInWithPopup(auth, provider);
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          console.log("Connecté :", result.user.email);
+        })
+        .catch((error) => {
+          console.error("Erreur auth :", error);
+        });
     } catch (err) {
       console.error(err);
     }
