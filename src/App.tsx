@@ -6,6 +6,7 @@ import { auth, provider, db } from "./firebase";
 import Utilisateurs from "./pages/utilisateurs";
 import CartographieDetail from "./pages/CartographieDetail";
 import ProcessusDetail from "./pages/ProcessusDetail";
+import CartographieList from "./pages/CartographieList";
 
 const ALLOWED_DOMAIN = "@jinnov-insa.fr";
 const DEFAULT_ADMIN = "augustin.zahorka@jinnov-insa.fr";
@@ -107,14 +108,12 @@ function App() {
 
       <nav className="mb-6 space-x-4">
         <Link to="/">Accueil</Link>
-        <Link to="/cartographie">Cartographie</Link>
         <Link to="/processus">Processus</Link>
         {user.role === "admin" && <Link to="/utilisateurs">Utilisateurs</Link>}
       </nav>
 
       <Routes>
         <Route path="/" element={<Accueil />} />
-        <Route path="/cartographie" element={<Cartographie />} />
         <Route path="/processus" element={<Processus />} />
         <Route path="/cartographie/:id" element={<CartographieDetail />} />
         <Route
@@ -133,7 +132,7 @@ function App() {
 }
 
 function Accueil() {
-  return <h1 className="text-2xl font-bold">Page d'accueil</h1>;
+  return <CartographieList />;
 }
 function Cartographie() {
   return <h1 className="text-2xl font-bold">Vue Cartographie</h1>;
